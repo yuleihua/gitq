@@ -17,7 +17,7 @@ def getDicts(key, types):
     if types == 0:
         url = "https://api.github.com/search/repositories?q=language:"+key+"&sort=stars"
     elif types == 1:
-        url = "https://api.github.com/search/repositories?q="+key+"&s=stars&type=Repositories"
+        url = "https://api.github.com/search/repositories?q="+key+"&sort=stars&type=Repositories"
 
     r = requests.get(url)
     if r.status_code == 200:
