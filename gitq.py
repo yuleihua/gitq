@@ -98,6 +98,8 @@ if __name__ == '__main__':
     args = ap.parse_args()
 
     downloadLimit = args.number
+    if downloadLimit > 30:
+        downloadLimit = 30
 
     if args.directory:
         if not os.path.exists(args.directory):
