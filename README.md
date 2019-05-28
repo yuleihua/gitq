@@ -42,7 +42,7 @@ awesome-python-master
 ### download by key word
 
 ```
-$ python3 gitq.py -n 1 -l nginx  -d /tmp/nginx
+$ python3 gitq.py -n 1 -q nginx  -d /tmp/nginx
 Repositories total ==> 30
 
 
