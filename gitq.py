@@ -96,19 +96,29 @@ async def task_repository(repo_dicts):
 
 
 async def task_file(file):
+    lines = []
     infile = open(file, 'r')
+    for line in infile:
+        content = line.strip().split(',')
+        if content and content[0] != '0':
+            lines.append(line.strip())
+    lines = list(set(lines))
+
     tasks = []
     count = 0
     # 0-1, name, repository, stars,
-    for line in infile:
-        content = line.strip().split(',')
+    for line in lines:
+        content = line.split(',')
         if content and content[0] != '0':
             if not os.path.exists(os.path.join(downloadPath, content[1] + '.zip.ok')):
                 count = count + 1
                 print('\nname ==> ', content[1])
-                print('repository ==> ', content[2])
+                url = get_latest(content[1].replace('@', '/', 1))
+                if not url:
+                    url = content[2]
+                print('repository ==> ', url)
                 print('stars ==> ', content[3])
-                tasks.append(fetch(content[1], content[2], content[3], True))
+                tasks.append(fetch(content[1], url, content[3], True))
 
     print('handle job file count: ', count)
     if tasks:
@@ -123,7 +133,8 @@ def write_file(file, content):
 
 async def fetch(name, url, stars, file):
     if not file:
-        write_file(os.path.join(downloadPath, downloadFile), '1,' + name + ',' + url + ',' + str(stars) + '\n')
+        # write_file(os.path.join(downloadPath, downloadFile), '1,' + name + ',' + url + ',' + str(stars) + '\n')
+        write_file(os.path.join(downloadPath, downloadFile), '1,' + name + ',' + url + ',0,' + '\n')
 
     try:
         async with aiohttp.request('GET', url) as resp:
@@ -132,7 +143,8 @@ async def fetch(name, url, stars, file):
                 fd.write(content)
     except Exception as e:
         print(e)
-        write_file(os.path.join(downloadPath, jobFile), '1,' + name + ',' + url + ',' + str(stars) + '\n')
+        # write_file(os.path.join(downloadPath, jobFile), '1,' + name + ',' + url + ',' + str(stars) + '\n')
+        write_file(os.path.join(downloadPath, jobFile), '1,' + name + ',' + url + ',0,' + '\n')
 
 
 def unzip():
