@@ -5,6 +5,7 @@ import time
 import requests
 import argparse
 import json
+
 try:
     import queue
 except ImportError:
@@ -15,20 +16,22 @@ import git
 downloadLimit = 65535
 downloadPath = os.path.abspath('.')
 downloadFile = 'download.txt'
-taskQueue =queue.Queue(65536)
+taskQueue = queue.Queue(65536)
+
 
 # get_repository get github repository, but only top 30
 def get_repository(key, types, current_page):
     url = ''
     if types == 0:
-        url = "https://api.github.com/search/repositories?q=language:{0}&sort=stars&per_page=200&page={1}".format(key, current_page)
+        url = "https://api.github.com/search/repositories?q=language:{0}&sort=stars&per_page=200&page={1}".format(key,
+                                                                                                                  current_page)
     elif types == 1:
-        url = "https://api.github.com/search/repositories?q={0}&sort=stars&per_page=200&page={1}".format(key,current_page)
+        url = "https://api.github.com/search/repositories?q={0}&sort=stars&per_page=200&page={1}".format(key,
+                                                                                                         current_page)
     elif types == 2:
-        url = "https://api.github.com/orgs/{0}/repos?per_page=200&page={1}".format(key,current_page)
+        url = "https://api.github.com/orgs/{0}/repos?per_page=200&page={1}".format(key, current_page)
     elif types == 3:
         url = "https://api.github.com/users/{0}/repos?per_page=200&page={1}".format(key, current_page)
-
 
     r = requests.get(url)
     if r.status_code == 200:
@@ -37,6 +40,7 @@ def get_repository(key, types, current_page):
         print('repositories total ==> %d' % len(repo_dicts))
         return repo_dicts
     return []
+
 
 def task_repository(repo_dicts):
     count = 0
@@ -56,15 +60,18 @@ def task_repository(repo_dicts):
             count = count + 1
     print('handle count: ', count)
 
+
 def fetch(name, url):
-    line = name + ',' + url  + '\n'
+    line = name + ',' + url + '\n'
     taskQueue.put(line)
     write_file(os.path.join(downloadPath, downloadFile), line)
+
 
 def write_file(file, content):
     with open(file, mode='a+', encoding='utf-8') as f:
         f.write(content)
         f.flush()
+
 
 def clone_repo(cloningpath):
     print(cloningpath)
@@ -81,18 +88,19 @@ def clone_repo(cloningpath):
         repo_username = content[0]
         url = content[1]
 
-        try:
-            if not os.path.exists(os.path.join(cloningpath, repo_username)):
-                os.mkdir(os.path.join(cloningpath, repo_username))
-        except Exception:
-            print("Error: There is an error in creating directories")
+        # try:
+        #     if not os.path.exists(os.path.join(cloningpath, repo_username)):
+        #         os.mkdir(os.path.join(cloningpath, repo_username))
+        # except Exception:
+        #     print("Error: There is an error in creating directories")
 
         fullpath = os.path.join(cloningpath, repo_username)
         print(fullpath)
-        #if os.path.exists(fullpath):
-        #    git.Repo(fullpath).remote().pull()
-        #else:
-        git.Repo.clone_from(url, fullpath)
+        if os.path.exists(fullpath):
+            git.Repo(fullpath).remote().pull()
+        else:
+            git.Repo.clone_from(url, fullpath)
+
 
 def thread_clone_repos(dir, threads_limit=10):
     threads_state = []
@@ -107,13 +115,14 @@ def thread_clone_repos(dir, threads_limit=10):
     for _ in threads_state:
         _.join()
 
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-n", "--number", type=int, default=150, help="mumber of download limit")
     ap.add_argument("-l", "--lang", help="lang, like go, python, java")
     ap.add_argument("-d", "--directory", help="download directory")
     ap.add_argument("-q", "--query", help="query key")
-    ap.add_argument("-u", "--user",  help="user name")
+    ap.add_argument("-u", "--user", help="user name")
     ap.add_argument("-o", "--org", help="org name")
     args = ap.parse_args()
 
