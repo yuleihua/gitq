@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import os
+import sys
 import time
 import requests
 import zipfile
@@ -9,18 +10,23 @@ import argparse
 
 downloadLimit = 5
 downloadPath = os.path.abspath('.')
-unzipFlag = True
+unzipFlag = False
 downloadFile = 'download.txt'
+updateFile = 'update.txt'
 jobFile = 'job.txt'
 
 
 # get_repository get github repository, but only top 30
-def get_repository(key, types):
+def get_repository(key, types, current_page):
     url = ''
     if types == 0:
-        url = 'https://api.github.com/search/repositories?q=language:'+key+'&sort=stars'
+        url = "https://api.github.com/search/repositories?q=language:{0}&sort=stars&per_page=200&page={1}".format(key, current_page)
     elif types == 1:
-        url = 'https://api.github.com/search/repositories?q='+key+'&sort=stars&type=Repositories'
+        url = "https://api.github.com/search/repositories?q={0}&sort=stars&per_page=200&page={1}".format(key,current_page)
+    elif types == 2:
+        url = "https://api.github.com/orgs/{0}/repos?per_page=200&page={1}".format(key,current_page)
+    elif types == 3:
+        url = "https://api.github.com/users/{0}/repos?per_page=200&page={1}".format(key, current_page)
 
     r = requests.get(url)
     if r.status_code == 200:
@@ -137,8 +143,8 @@ async def fetch(name, url, stars, file):
         write_file(os.path.join(downloadPath, downloadFile), '1,' + name + ',' + url + ',0,' + '\n')
 
     try:
-        async with aiohttp.request('GET', url) as resp:
-            content = await resp.read()
+        async with aiohttp.request('GET', url) as dicts:
+            content = await dicts.read()
             with open(os.path.join(downloadPath, name + '.zip'), 'wb') as fd:
                 fd.write(content)
     except Exception as e:
@@ -179,10 +185,13 @@ def recovery_file(file, name):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument("-n", "--number", type=int, help="mumber of download limit")
+    ap.add_argument("-n", "--number", type=int, default=5, help="mumber of download limit")
     ap.add_argument("-l", "--lang", help="lang, like go, python, java")
     ap.add_argument("-d", "--directory", help="download directory")
     ap.add_argument("-q", "--qurey", help="query key")
+    ap.add_argument("-f", "--fetch", action="store_true", default=False, help="fetch lastest code from downloadFile")
+    ap.add_argument("-u", "--user",  help="user name")
+    ap.add_argument("-o", "--org", help="org name")
     args = ap.parse_args()
 
     downloadLimit = args.number
@@ -202,13 +211,71 @@ if __name__ == '__main__':
         handle_file(new)
         os.remove(new)
 
-    if args.lang:
-        dicts = get_repository(args.lang, 0)
-        handle_repository(dicts)
+    if args.fetch:
+        update_file = os.path.join(downloadPath, updateFile)
+        if os.path.exists(update_file):
+            with open(update_file) as fa:
+                count = 0
+                index = 1
+                contents = []
+                for line in fa.readlines():
+                    contents.append(line)
+                    count = count + 1
+                    if count % downloadLimit == 0:
+                        tmp_file = 'update-%03d.txt' % (index * downloadLimit)
+                        fb = open(tmp_file, 'w')
+                        for c in contents:
+                            fb.write(c)
+                        fb.close()
+                        handle_file(tmp_file)
+                        count = 0
+                        index = index + 1
+                        contents = []
+        sys.exit(0)
 
-    if args.qurey:
-        dicts = get_repository(args.qurey, 1)
-        handle_repository(dicts)
+    dicts = []
+    current_page = 1
+    count = 0
+    if args.lang:
+        while len(dicts) != 0 or current_page == 1:
+            dicts = get_repository(args.lang, 0, current_page)
+            handle_repository(dicts)
+            current_page += 1
+            count = count + len(dicts)
+            if count > downloadLimit:
+                break
+            time.sleep(1)
+
+    if args.query:
+        while len(dicts) != 0 or current_page == 1:
+            dicts = get_repository(args.qurey, 1, current_page)
+            handle_repository(dicts)
+            current_page += 1
+            count = count + len(dicts)
+            if count >= downloadLimit:
+                break
+            time.sleep(1)
+
+    if args.org:
+        while len(dicts) != 0 or current_page == 1:
+            dicts = get_repository(args.org, 2, current_page)
+            handle_repository(dicts)
+            current_page += 1
+            count = count + len(dicts)
+            if count > downloadLimit:
+                break
+            time.sleep(1)
+
+    if args.user:
+        while len(dicts) != 0 or current_page == 1:
+            dicts = get_repository(args.user, 3, current_page)
+            handle_repository(dicts)
+            current_page += 1
+            count = count + len(dicts)
+            if count > downloadLimit:
+                break
+            time.sleep(1)
+
 
     if unzipFlag:
         unzip()
