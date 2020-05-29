@@ -23,11 +23,9 @@ taskQueue = queue.Queue(65536)
 def get_repository(key, types, current_page):
     url = ''
     if types == 0:
-        url = "https://api.github.com/search/repositories?q=language:{0}&sort=stars&per_page=200&page={1}".format(key,
-                                                                                                                  current_page)
+        url = "https://api.github.com/search/repositories?q=language:{0}&sort=stars&per_page=200&page={1}".format(key,current_page)
     elif types == 1:
-        url = "https://api.github.com/search/repositories?q={0}&sort=stars&per_page=200&page={1}".format(key,
-                                                                                                         current_page)
+        url = "https://api.github.com/search/repositories?q={0}&sort=stars&per_page=200&page={1}".format(key,current_page)
     elif types == 2:
         url = "https://api.github.com/orgs/{0}/repos?per_page=200&page={1}".format(key, current_page)
     elif types == 3:
