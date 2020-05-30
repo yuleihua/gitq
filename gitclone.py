@@ -34,9 +34,14 @@ def get_repository(key, types, current_page):
     r = requests.get(url)
     if r.status_code == 200:
         response_dict = r.json()
-        repo_dicts = response_dict['items']
-        print('repositories total ==> %d' % len(repo_dicts))
-        return repo_dicts
+        if types == 0 or types == 1:
+            repo_dicts = response_dict['items']
+            print('repositories total ==> %d' % len(repo_dicts))
+            return repo_dicts
+        elif types == 2 or types == 3:
+            print('repositories total ==> %d' % len(response_dict))
+            return response_dict
+
     return []
 
 
@@ -71,11 +76,12 @@ def write_file(file, content):
         f.flush()
 
 
-def clone_repo(cloningpath):
-    print(cloningpath)
+def clone_repo(clone_dir):
+    print(clone_dir)
+
     try:
-        if not os.path.exists(cloningpath):
-            os.mkdir(cloningpath)
+        if not os.path.exists(clone_dir):
+            os.mkdir(clone_dir)
     except Exception:
         print("Error: There is an error in creating directories")
 
@@ -87,17 +93,25 @@ def clone_repo(cloningpath):
         url = content[1]
 
         # try:
-        #     if not os.path.exists(os.path.join(cloningpath, repo_username)):
-        #         os.mkdir(os.path.join(cloningpath, repo_username))
+        #     if not os.path.exists(os.path.join(clone_dir, repo_username)):
+        #         os.mkdir(os.path.join(clone_dir, repo_username))
         # except Exception:
         #     print("Error: There is an error in creating directories")
 
-        fullpath = os.path.join(cloningpath, repo_username)
+        fullpath = os.path.join(clone_dir, repo_username)
         print(fullpath)
-        if os.path.exists(fullpath):
-            git.Repo(fullpath).remote().pull()
-        else:
-            git.Repo.clone_from(url, fullpath)
+        try:
+            if os.path.exists(os.path.join(fullpath, ".git")):
+                git.Repo(fullpath).remote().pull()
+            else:
+                git.Repo.clone_from(url, fullpath)
+        except Exception as e:
+            print(e)
+            print("Error: There was an error in cloning [{}]".format(url))
+        taskQueue.task_done()
+        time.sleep(5)
+
+
 
 
 def thread_clone_repos(dir, threads_limit=10):
@@ -108,7 +122,7 @@ def thread_clone_repos(dir, threads_limit=10):
             t.daemon = True
             t.start()
         else:
-            time.sleep(0.5)
+            time.sleep(10)
             threads_state.append(t)
     for _ in threads_state:
         _.join()
