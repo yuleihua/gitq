@@ -10,7 +10,7 @@ chardet==3.0.4
 colorama==0.4.3
 conan==1.24.0
 configobj==5.0.6
-cryptography==2.3
+cryptography==3.2
 DataProperty==0.43.1
 decorator==4.2.1
 deprecation==2.0.7
