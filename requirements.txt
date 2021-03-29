@@ -53,7 +53,7 @@ pluginbase==0.7
 ply==3.9
 psutil==5.7.0
 pycparser==2.14
-Pygments==2.6.1
+Pygments==2.7.4
 pygobject==3.28.3
 PyJWT==1.7.1
 pyOpenSSL==18.0.0
