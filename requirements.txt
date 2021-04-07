@@ -3,7 +3,7 @@ asn1crypto==0.24.0
 async-timeout==3.0.1
 attrs==19.3.0
 bcc==0.7.0
-bottle==0.12.18
+bottle==0.12.19
 certifi==2019.11.28
 cffi==1.11.5
 chardet==3.0.4
